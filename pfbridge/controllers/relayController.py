@@ -33,7 +33,7 @@ import  httpx
 import  pathlib
 import  sys
 import  time
-from    loguru                  import logger
+from    loguru              import logger
 LOG             = logger.debug
 
 logger_format = (
@@ -61,7 +61,7 @@ def noop():
         'status':   True
     }
 
-async def workflow_do(
+async def relayAndEchoBack(
         payload             : relayModel.clientPayload,
         request             : Request
 ) -> dict:
@@ -77,7 +77,6 @@ async def workflow_do(
 
     """
     timestamp = lambda : '%s' % datetime.now()
-
     pflinkPOST:relayModel.pflinkInput   = relayModel.pflinkInput()
     d_logEvent:dict      = {
         '_timestamp'        : timestamp(),
@@ -86,22 +85,20 @@ async def workflow_do(
         'requestUserAgent'  : request.headers['user-agent'],
         'payload'           : payload
     }
-    d_ret:dict          = {
-        'log'               : d_logEvent,
-        'status'            : False,
-        'timestamp'         : d_logEvent['_timestamp'],
-        'message'           :
-            f"Nothing was saved -- logObject '{payload.logObject}' doesn't exist. Create with an appropriate PUT request!"
-    }
+    LOG(d_logEvent)
 
-    pflinkPOST.imageDetail                          = payload.image
-    pflinkPOST.pflinkMeta.FeedName                  = 'test'
-    pflinkPOST.pflinkMeta.analysisArgs.PluginName   = settings.pflink.analysisPluginName
-    pflinkPOST.pflinkMeta.analysisArgs.Version      = settings.pflink.analysisPluginArgs
+    pflinkPOST.PACSdirective    = payload.imageMeta
+    pflinkPOST.FeedName                  = 'test'
+    match payload.analyzeFunction:
+        case 'dylld':
+            pflinkPOST.analysisArgs.PluginName   = settings.dylld.analysisPluginName
+            pflinkPOST.analysisArgs.Version      = settings.dylld.analysisPluginArgs
     async with httpx.AsyncClient() as client:
         response: httpx.Response = await client.post(
                 settings.pflink.URL,
                 data = pflinkPOST.json()
         )
-        return response.json()
+        d_response  = response.json()
+        LOG(d_response)
+        return d_response
 

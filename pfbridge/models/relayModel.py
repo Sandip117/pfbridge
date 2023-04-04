@@ -55,10 +55,10 @@ class imageDescriptor(BaseModel):
 class pacsModel(BaseModel):
     PFDCMservice:str                = pfdcmService().provider
     PACSservice:str                 = pacsService().provider
-    PACSdirective:dict              = PACSqueryCore
+    PACSdirective:PACSqueryCore     = PACSqueryCore()
 
 class pypxModel(BaseModel):
-    db:db
+    db:str                          = db().path
     swift:str                       = CUBEandSwiftKey().key
     CUBE:str                        = CUBEandSwiftKey().key
     swiftServicesPACS:str           = pacsService().provider
@@ -75,15 +75,21 @@ class feedModel(BaseModel):
     dblogbasepath:str               = db().path
     FeedName:str                    = ''
     User:str                        = 'radstar'
-    analysisArgs:analysisModel
+    analysisArgs:analysisModel      = analysisModel()
 
 class pflinkInput(BaseModel):
-    imageDetail:pacsModel
-    thenArgs:dict                   = pypxModel
-    pflinkMeta:feedModel
+    PFDCMservice:str                = pfdcmService().provider
+    PACSservice:str                 = pacsService().provider
+    PACSdirective:PACSqueryCore     = PACSqueryCore()
+    pacsModel()
+    thenArgs:pypxModel              = pypxModel()
+    dblogbasepath:str               = db().path
+    FeedName:str                    = ''
+    User:str                        = 'radstar'
+    analysisArgs:analysisModel      = analysisModel()
 
 class clientPayload(BaseModel):
-    imageMeta:dict                  = PACSqueryCore()
+    imageMeta:PACSqueryCore         = PACSqueryCore()
     analyzeFunction:str             = ''
 
 class pflinkResponseSchema(BaseModel):

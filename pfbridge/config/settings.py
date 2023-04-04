@@ -1,5 +1,5 @@
 class pflink:
-    URL:str                 = 'http://localhost:8050/testing/'
+    URL:str                 = 'http://havana.tch.harvard.edu:8050/testing/'
 
 class dylld(pflink):
     analysisPluginName:str  = 'pl-dylld'

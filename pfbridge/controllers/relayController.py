@@ -11,28 +11,21 @@ from    fastapi.concurrency import  run_in_threadpool
 from    pydantic            import  BaseModel, Field
 from    typing              import  Optional, List, Dict, Callable, Any
 
-import  numpy               as      np
-from    scipy               import  stats
-
 from    .jobController      import  jobber
 import  asyncio
-import  subprocess
 from    models              import  relayModel
-import  logging
 import  os
 from    datetime            import  datetime
 
+import  json
 import  pudb
 from    pudb.remote         import set_trace
-import  config
 from    config              import settings
-import  json
-import  pypx
 import  httpx
 
-import  pathlib
+from    lib                 import map
+
 import  sys
-import  time
 from    loguru              import logger
 LOG             = logger.debug
 
@@ -61,10 +54,39 @@ def noop():
         'status':   True
     }
 
+def logToStdout(description:str, d_log:dict) -> None:
+    """
+    Simply "write" the d_log to console stdout
+
+    Args:
+        d_log (dict): some dictionary to log
+    """
+    LOG("\n%s\n%s" % (description, json.dumps(d_log, indent =4)))
+
+def logEvent(payload:relayModel.clientPayload, request: Request)-> dict:
+    """
+    Output an "input" log event
+
+    Args:
+        request (Request): the incoming request
+
+    Returns:
+        dict: a log event
+    """
+    timestamp = lambda : '%s' % datetime.now()
+    d_logEvent:dict      = {
+        '_timestamp'        : timestamp(),
+        'requestHost'       : request.client.host,
+        'requestPort'       : str(request.client.port),
+        'requestUserAgent'  : request.headers['user-agent'],
+        'payload'           : json.loads(payload.json())
+    }
+    return d_logEvent
+
 async def relayAndEchoBack(
         payload             : relayModel.clientPayload,
         request             : Request
-) -> dict:
+) -> relayModel.clientResponseSchema:
     """
     Parse the incoming payload, expand to pflink needs,
     transmit, and return remote response.
@@ -76,29 +98,18 @@ async def relayAndEchoBack(
         dict: the reponse from the remote server
 
     """
-    timestamp = lambda : '%s' % datetime.now()
-    pflinkPOST:relayModel.pflinkInput   = relayModel.pflinkInput()
-    d_logEvent:dict      = {
-        '_timestamp'        : timestamp(),
-        'requestHost'       : request.client.host,
-        'requestPort'       : str(request.client.port),
-        'requestUserAgent'  : request.headers['user-agent'],
-        'payload'           : payload
-    }
-    LOG(d_logEvent)
-
-    pflinkPOST.PACSdirective    = payload.imageMeta
-    pflinkPOST.FeedName                  = 'test'
-    match payload.analyzeFunction:
-        case 'dylld':
-            pflinkPOST.analysisArgs.PluginName   = settings.dylld.analysisPluginName
-            pflinkPOST.analysisArgs.Version      = settings.dylld.analysisPluginArgs
+    boundary:map.Map            = map.Map(name = 'Leg Length Analysis')
+    d_logEvent:dict             = logEvent(payload, request)
+    logToStdout("Incoming", d_logEvent)
+    toPflink:relayModel.pflinkInput = boundary.intoPflink_transform(payload)
+    logToStdout("Transmitting", json.loads(toPflink.json()))
     async with httpx.AsyncClient() as client:
         response: httpx.Response = await client.post(
                 settings.pflink.URL,
-                data = pflinkPOST.json()
+                data = toPflink.json()
         )
-        d_response  = response.json()
-        LOG(d_response)
-        return d_response
+        logToStdout("Reply", response.json())
+        toClient:relayModel.clientResponseSchema = boundary.fromPflink_transform(response)
+        logToStdout("Return", json.loads(toClient.json()))
+        return toClient
 

@@ -74,37 +74,39 @@ randtime_generate () {
 #
 
 relayTest () {
-  pflink="$1"
-  curl -X 'POST' \
-  '"$pfbridge"/api/v1/analyze/' \
-  -H 'accept: application/json' \
-  -H 'Content-Type: application/json' \
-  -d '{
-  "imageMeta": {
-    "AccessionNumber": "",
-    "PatientID": "",
-    "PatientName": "",
-    "PatientBirthDate": "",
-    "PatientAge": "",
-    "PatientSex": "",
-    "StudyDate": "",
-    "StudyDescription": "",
-    "StudyInstanceUID": "12345678",
-    "Modality": "",
-    "ModalitiesInStudy": "",
-    "PerformedStationAETitle": "",
-    "NumberOfSeriesRelatedInstances": "",
-    "InstanceNumber": "",
-    "SeriesDate": "",
-    "SeriesDescription": "",
-    "SeriesInstanceUID": "12345678",
-    "ProtocolName": "",
-    "AcquisitionProtocolDescription": "",
-    "AcquisitionProtocolName": ""
-  },
-  "analyzeFunction": "dylld"
-}'
- | jq
+  StudyInstanceUID=$1
+  SeriesInstanceUID=$2
+  PACSDIRECTIVE='{
+        "AccessionNumber": "",
+        "PatientID": "",
+        "PatientName": "",
+        "PatientBirthDate": "",
+        "PatientAge": "",
+        "PatientSex": "",
+        "StudyDate": "",
+        "StudyDescription": "",
+        "StudyInstanceUID": "'$StudyInstanceUID'",
+        "Modality": "",
+        "ModalitiesInStudy": "",
+        "PerformedStationAETitle": "",
+        "NumberOfSeriesRelatedInstances": "",
+        "InstanceNumber": "",
+        "SeriesDate": "",
+        "SeriesDescription": "",
+        "SeriesInstanceUID": "'$SeriesInstanceUID'",
+        "ProtocolName": "",
+        "AcquisitionProtocolDescription": "",
+        "AcquisitionProtocolName": ""
+  }'
+  CMD=$(echo curl -s -X 'POST'          \
+  \"$pfbridge/api/v1/analyze/\"         \
+  -H \"accept: application/json\"       \
+  -H \"Content-Type: application/json\" \
+  -d ''\''{
+  "imageMeta": '$PACSDIRECTIVE',
+    "analyzeFunction": "dylld"
+  }'\''')
+  echo "$CMD" | sh | jq
 }
 
 

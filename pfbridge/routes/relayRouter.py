@@ -11,13 +11,11 @@ str_description = """
 
 
 from    fastapi             import  APIRouter, Query, HTTPException, BackgroundTasks, Request
-from    fastapi.encoders    import  jsonable_encoder
-from    typing              import  List, Dict
+from    typing              import  List, Dict, Any
 
 from    models              import  relayModel
 from    controllers         import  relayController
 
-from    datetime            import datetime, timezone
 import  pudb
 
 router          = APIRouter()
@@ -25,7 +23,7 @@ router.tags     = ['Relay services']
 
 @router.post(
     '/analyze/',
-    response_model  = relayModel.pflinkResponseSchema,
+    response_model  = relayModel.clientResponseSchema,
     summary         = '''
     POST an image and analysis directive that is relayed (after some
     internal processing) to a remote service.
@@ -34,7 +32,7 @@ router.tags     = ['Relay services']
 async def workflow_do(
     relayPayload    : relayModel.clientPayload,
     request         : Request
-) -> relayModel.pflinkResponseSchema:
+) -> relayModel.clientResponseSchema:
     """
     Description
     -----------
@@ -82,7 +80,7 @@ async def workflow_do(
 
     """
     # pudb.set_trace()
-    d_ret = await relayController.relayAndEchoBack(
+    d_ret:relayModel.clientResponseSchema = await relayController.relayAndEchoBack(
             relayPayload, request
     )
     return d_ret

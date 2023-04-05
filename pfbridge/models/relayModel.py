@@ -10,20 +10,26 @@ from    datetime            import datetime
 from    enum                import Enum
 from    pathlib             import Path
 import  pudb
+from    config              import settings
 
 class pacsService(BaseModel):
+    """Name of the PACS service provider"""
     provider:str                    = 'orthanc'
 
 class pfdcmService(BaseModel):
+    """Name of the PFDCM service provider -- relevant to ChRIS"""
     provider:str                    = 'PFDCMLOCAL'
 
 class CUBEandSwiftKey(BaseModel):
+    """Lookup key for CUBE and swift information -- relevant to ChRIS"""
     key:str                         = 'local'
 
 class db(BaseModel):
+    """Path of the ChRIS managed PACS filesystem database"""
     path:str                        = '/home/dicom/log'
 
 class DICOMfile(BaseModel):
+    """Explicit extention of DICOMS -- relevant to ChRIS"""
     extension:str                   = 'dcm'
 
 class PACSqueryCore(BaseModel):
@@ -49,14 +55,6 @@ class PACSqueryCore(BaseModel):
     AcquisitionProtocolDescription      : str   = ""
     AcquisitionProtocolName             : str   = ""
 
-class imageDescriptor(BaseModel):
-    headerMeta:dict                 = {}
-
-class pacsModel(BaseModel):
-    PFDCMservice:str                = pfdcmService().provider
-    PACSservice:str                 = pacsService().provider
-    PACSdirective:PACSqueryCore     = PACSqueryCore()
-
 class pypxModel(BaseModel):
     db:str                          = db().path
     swift:str                       = CUBEandSwiftKey().key
@@ -71,21 +69,14 @@ class analysisModel(BaseModel):
     Params:str                      = ''
     PassUserCreds:bool              = False
 
-class feedModel(BaseModel):
-    dblogbasepath:str               = db().path
-    FeedName:str                    = ''
-    User:str                        = 'radstar'
-    analysisArgs:analysisModel      = analysisModel()
-
 class pflinkInput(BaseModel):
     PFDCMservice:str                = pfdcmService().provider
     PACSservice:str                 = pacsService().provider
     PACSdirective:PACSqueryCore     = PACSqueryCore()
-    pacsModel()
     thenArgs:pypxModel              = pypxModel()
     dblogbasepath:str               = db().path
-    FeedName:str                    = ''
-    User:str                        = 'radstar'
+    FeedName:str                    = settings.dylld.analysisFeedName
+    User:str                        = settings.dylld.clinicalUser
     analysisArgs:analysisModel      = analysisModel()
 
 class clientPayload(BaseModel):
@@ -93,7 +84,9 @@ class clientPayload(BaseModel):
     analyzeFunction:str             = ''
 
 class pflinkResponseSchema(BaseModel):
-    """The Workflow status response Model"""
+    """
+    The Workflow status response model. This is the return from pflink.
+    """
     StudyFound                          : bool = False
     WorkflowState                       : str  = ''
     StateProgress                       : str  = "0%"
@@ -103,3 +96,11 @@ class pflinkResponseSchema(BaseModel):
     Message                             : str  = ""
     Error                               : str  = ""
 
+class clientResponseSchema(BaseModel):
+    """
+    The response ultimately received by the client. This is a modified
+    subset of the pflinkResponseSchema
+    """
+    Status                              : str   = ''
+    Progress                            : str   = ''
+    Error                               : str   = ''

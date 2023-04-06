@@ -31,7 +31,8 @@ tags_metadata:list = [
             """
             Provide simple API endpoints that will serve as relays for client
             payloads. These payloads are "repacked" and relayed along, while
-            downstream replies are returned to the original client.
+            downstream replies are returned to the original client after some
+            simplifcation.
             """
     },
     {
@@ -62,7 +63,7 @@ app.add_middleware(
 )
 
 hello_router = helloRouter_create(
-    name            = 'pfdcm_hello',
+    name            = 'pfbridge_hello',
     version         = str_version,
     about           = str_about
 )

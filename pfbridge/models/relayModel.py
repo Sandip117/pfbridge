@@ -83,24 +83,37 @@ class clientPayload(BaseModel):
     imageMeta:PACSqueryCore         = PACSqueryCore()
     analyzeFunction:str             = ''
 
+class pflinkError(BaseModel):
+    """
+    A model returned when a pflink connection error has been flagged
+    """
+    error:str                       = ""
+    URL:str                         = ""
+    help:str                        = ""
+
+class pflinkURLs(BaseModel):
+    productionURL:str               = settings.pflink.prodURL
+    testingURL:str                  = settings.pflink.testURL
+
 class pflinkResponseSchema(BaseModel):
     """
     The Workflow status response model. This is the return from pflink.
     """
-    StudyFound                          : bool = False
-    WorkflowState                       : str  = ''
-    StateProgress                       : str  = "0%"
-    FeedId                              : str  = ""
-    FeedName                            : str  = ""
-    CurrentNode                         : list = []
-    Message                             : str  = ""
-    Error                               : str  = ""
+    StudyFound:bool                 = False
+    WorkflowState:str               = ''
+    StateProgress:str               = "0%"
+    FeedId:str                      = ""
+    FeedName:str                    = ""
+    CurrentNode:list                = []
+    Message:str                     = ""
+    Error:str                       = ""
 
 class clientResponseSchema(BaseModel):
     """
     The response ultimately received by the client. This is a modified
     subset of the pflinkResponseSchema
     """
-    Status                              : str   = ''
-    Progress                            : str   = ''
-    Error                               : str   = ''
+    Status:str                      = ''
+    Progress:str                    = ''
+    ErrorWorkflow:str               = ''
+    ErrorComms:pflinkError          = pflinkError()

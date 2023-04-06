@@ -72,6 +72,8 @@ class Map:
         fromPflink:dict             = payload.json()
         toClinicalService.Status    = self.d_description.get(fromPflink['WorkflowState'],
                                                                  "Unknown state encountered")
-        toClinicalService.Progress  = fromPflink['StateProgress']
-        toClinicalService.Error     = fromPflink['Error']
+        if not fromPflink['StudyFound']:
+            toClinicalService.Status    = "Image not found!"
+        toClinicalService.Progress      = fromPflink['StateProgress']
+        toClinicalService.ErrorWorkflow = fromPflink['Error']
         return toClinicalService

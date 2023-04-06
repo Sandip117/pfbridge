@@ -1,8 +1,12 @@
-class pflink:
-    URL:str                 = 'http://havana.tch.harvard.edu:8050/testing/'
+class Pflink:
+    prodURL:str             = 'http://localhost:8050/workflow'
+    testURL:str             = 'http://localhost:8050/testing/'
 
-class dylld(pflink):
+class Dylld(Pflink):
     analysisPluginName:str  = 'pl-dylld'
     analysisPluginArgs:str  = ''
     clinicalUser:str        = 'radstar'
     analysisFeedName:str    = 'dylld-%SeriesInstanceUID'
+
+pflink  = Pflink()
+dylld   = Dylld()

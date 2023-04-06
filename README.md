@@ -39,9 +39,17 @@ docker build --no-cache --build-arg UID=$UID -t local/pfbridge .
 ## Deploy as background process
 
 ```bash
-docker run --name pfbridge  --rm -it -d                                            \
-        -p 33333:33333                                                          \
-        local/pfbridge /start-reload.sh
+# Set the workflow and testing URLs of the pflink instance
+# to which we are bridging
+export PRODURL=http://localhost:8050/workflow
+export TESTURL=http://localhost:8050/testing
+
+# For daemon, or background mode:
+docker run --env PRODURL=$PRODURL --env TESTURL=$TESTURL                        \
+               --name pfbridge  --rm -it                                        \
+               -p 33333:33333                                                   \
+               -v $PWD/pfbridge:/app:ro                                         \
+               local/pfbridge /start-reload.sh
 ```
 
 ### "Hello, `pfbridge`, you're looking good"
@@ -71,15 +79,87 @@ Full API swagger is available. Once you have started `pfbridge`, and assuming th
 To debug code within `pfbridge` from a containerized instance, perform volume mappings in an interactive session:
 
 ```bash
+# Set the workflow and testing URLs of the pflink instance
+# to which we are bridging
+export PRODURL=http://localhost:8050/workflow
+export TESTURL=http://localhost:8050/testing
+
 # Run with support for source debugging
 docker run --name pfbridge  --rm -it                                              	\
-        -p 33333:33333 	                                                        \
+        -p 33333:33333 	                                                                \
         -v $PWD/pfbridge:/app:ro                                                  	\
         local/pfbridge /start-reload.sh
 ```
 
-## Test
+## Tests
 
-Coming soon!
+Proper tests coming soon. For now you can use the `workflow.sh` script to do some rudimentary testing. Assuming you have fired up an instance of `pfbridge`:
+
+```bash
+cd pfbridge/pfbridge
+# Assuming bash/zsh:
+source workflow.sh
+
+# You can check what the `pflink` URLs are configured as:
+❯ pflinkURLs_get
+{
+  "productionURL": "http://localhost:8050/workflow/",
+  "testingURL": "http://localhost:8050/testing/"
+}
+
+# This assumes of course that you have a `pflink` instance running on `localhost:8050`.
+# Let's assume not and try and hit the `testing` URL:
+# Here we use two numeric arguments that correspond to the
+# StudyInstanceUID and SeriesInstanceUID of a dummy test:
+
+❯ relayTest 1234567 1234567
+{
+  "Status": "Comms failure",
+  "Progress": "n/a",
+  "ErrorWorkflow": "n/a",
+  "ErrorComms": {
+    "error": "All connection attempts failed",
+    "URL": "http://localhost:8050/testing/",
+    "help": "Please check that the pflink URL is correct"
+  }
+}
+
+# If we in fact get `pflink` properly up, we can test the testing URL:
+❯ relayTest 1234567 1234567
+{
+  "Status": "Image not found!",
+  "Progress": "0%",
+  "ErrorWorkflow": "",
+  "ErrorComms": {
+    "error": "",
+    "URL": "",
+    "help": ""
+  }
+}
+❯ relayTest 1234567 1234567
+{
+  "Status": "Pulling image for analysis",
+  "Progress": "25%",
+  "ErrorWorkflow": "",
+  "ErrorComms": {
+    "error": "",
+    "URL": "",
+    "help": ""
+  }
+}
+❯ relayTest 1234567 1234567
+{
+  "Status": "Pulling image for analysis",
+  "Progress": "50%",
+  "ErrorWorkflow": "",
+  "ErrorComms": {
+    "error": "",
+    "URL": "",
+    "help": ""
+  }
+}
+
+
+```
 
 _-30-_

@@ -83,9 +83,32 @@ def logEvent(payload:relayModel.clientPayload, request: Request)-> dict:
     }
     return d_logEvent
 
+def commsFailed_handle(URL:str, e:Exception) -> relayModel.clientResponseSchema:
+    """
+    Handle a failed comms state
+
+    Args:
+        e (Exception): the comms failure
+
+    Returns:
+        relayModel.clientResponseSchema: a response with appropriate failure
+                                         conditions
+    """
+    failedClient:relayModel.clientResponseSchema    = relayModel.clientResponseSchema()
+    failedClient.Status         = "Comms failure"
+    failedClient.Progress       = "n/a"
+    failedClient.ErrorWorkflow  = "n/a"
+    errorResponse:relayModel.pflinkError            = relayModel.pflinkError()
+    errorResponse.URL           = URL
+    errorResponse.error         = str(e)
+    errorResponse.help          = "Please check that the pflink URL is correct"
+    failedClient.ErrorComms     = errorResponse
+    return failedClient
+
 async def relayAndEchoBack(
         payload             : relayModel.clientPayload,
-        request             : Request
+        request             : Request,
+        test                : bool
 ) -> relayModel.clientResponseSchema:
     """
     Parse the incoming payload, expand to pflink needs,
@@ -103,13 +126,18 @@ async def relayAndEchoBack(
     logToStdout("Incoming", d_logEvent)
     toPflink:relayModel.pflinkInput = boundary.intoPflink_transform(payload)
     logToStdout("Transmitting", json.loads(toPflink.json()))
+    URL:str                     = settings.pflink.testURL if test else settings.pflink.prodURL
+    toClient:relayModel.clientResponseSchema    = relayModel.clientResponseSchema()
     async with httpx.AsyncClient() as client:
-        response: httpx.Response = await client.post(
-                settings.pflink.URL,
-                data = toPflink.json()
-        )
-        logToStdout("Reply", response.json())
-        toClient:relayModel.clientResponseSchema = boundary.fromPflink_transform(response)
-        logToStdout("Return", json.loads(toClient.json()))
+        try:
+            response: httpx.Response = await client.post(
+                    URL,
+                    data = toPflink.json()
+            )
+            logToStdout("Reply", response.json())
+            toClient:relayModel.clientResponseSchema = boundary.fromPflink_transform(response)
+            logToStdout("Return", json.loads(toClient.json()))
+        except Exception as e:
+            toClient:relayModel.clientResponseSchema = commsFailed_handle(URL, e)
         return toClient
 

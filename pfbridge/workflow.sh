@@ -66,6 +66,42 @@ randtime_generate () {
 
 ###############################################################################
 #_____________________________________________________________________________#
+# G E T / P U T  pflink URLs                                                  #
+#_____________________________________________________________________________#
+###############################################################################
+# Relay and echo back to the test API endpoint of pflink                      #
+###############################################################################
+#
+
+pflinkURLs_get() {
+  CMD=$(echo curl -s -X 'GET'                 \
+  \"$pfbridge/api/v1/pflink/\"                \
+  -H \"accept: application/json\"             \
+  )
+  echo "$CMD" | sh | jq
+}
+
+testURL_set() {
+  URL=$1
+  CMD=$(echo curl -s -X 'PUT'                 \
+  \"$pfbridge/api/v1/pflink/testURL/?URL=$1\" \
+  -H \"accept: application/json\"             \
+  )
+  echo "$CMD" | sh | jq
+}
+
+prodURL_set() {
+  URL=$1
+  CMD=$(echo curl -s -X 'PUT'                 \
+  \"$pfbridge/api/v1/pflink/prodURL/?URL=$1\" \
+  -H \"accept: application/json\"             \
+  )
+  echo "$CMD" | sh | jq
+}
+
+
+###############################################################################
+#_____________________________________________________________________________#
 # R E L A Y  t e s t                                                          #
 #_____________________________________________________________________________#
 ###############################################################################
@@ -76,6 +112,7 @@ randtime_generate () {
 relayTest () {
   StudyInstanceUID=$1
   SeriesInstanceUID=$2
+  VERBOSE=$3
   PACSDIRECTIVE='{
         "AccessionNumber": "",
         "PatientID": "",
@@ -98,14 +135,15 @@ relayTest () {
         "AcquisitionProtocolDescription": "",
         "AcquisitionProtocolName": ""
   }'
-  CMD=$(echo curl -s -X 'POST'          \
-  \"$pfbridge/api/v1/analyze/\"         \
-  -H \"accept: application/json\"       \
-  -H \"Content-Type: application/json\" \
+  CMD=$(echo curl -s -X 'POST'            \
+  \"$pfbridge/api/v1/analyze/?test=true\" \
+  -H \"accept: application/json\"         \
+  -H \"Content-Type: application/json\"   \
   -d ''\''{
   "imageMeta": '$PACSDIRECTIVE',
     "analyzeFunction": "dylld"
   }'\''')
+  if (( ${#VERBOSE} )) ; then echo "$CMD" ; fi
   echo "$CMD" | sh | jq
 }
 

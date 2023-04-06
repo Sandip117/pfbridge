@@ -1,6 +1,8 @@
+import os
+
 class Pflink:
-    prodURL:str             = 'http://localhost:8050/workflow'
-    testURL:str             = 'http://localhost:8050/testing/'
+    prodURL:str             = os.getenv('PRODURL', 'http://localhost:8050/workflow')
+    testURL:str             = os.getenv('TESTURL', 'http://localhost:8050/testing/')
 
 class Dylld(Pflink):
     analysisPluginName:str  = 'pl-dylld'

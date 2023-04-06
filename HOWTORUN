@@ -6,13 +6,20 @@
 set UID (id -u)
 docker build --build-arg UID=$UID -t local/pfbridge .
 
+# Set the workflow and testing URLs of the pflink instance
+# to which we are bridging
+export PRODURL=http://localhost:8050/workflow
+export TESTURL=http://localhost:8050/testing
+
 # For daemon, or background mode:
-docker run --name pfbridge  --rm -it -d                                         \
+docker run --env PRODURL=$PRODURL --env TESTURL=$TESTURL                        \
+        --name pfbridge  --rm -it -d                                            \
         -p 33333:33333 	                                                        \
         local/pfbridge /start-reload.sh
 
 # Run with support for source debugging
-docker run --name pfbridge  --rm -it                                            \
+docker run --env PRODURL=$PRODURL --env TESTURL=$TESTURL                        \
+        --name pfbridge  --rm -it                                               \
         -p 33333:33333 	                                                        \
         -v $PWD/pfbridge:/app:ro                                                \
         local/pfbridge /start-reload.sh

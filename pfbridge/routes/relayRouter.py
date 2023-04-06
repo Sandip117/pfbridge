@@ -133,8 +133,8 @@ async def workflow_do(
     caller. Multiple calls with the same payload return current
     status of the workflow (or its completion).
 
-    Use the 'test=True' boolean to use the `pflink` test API
-    that simply returns the progressive stages for a workflow.
+    Send a `?test=true` boolean query parameter to use the `pflink`
+    test API that simply returns the progressive stages for a workflow.
 
     ```
     class clientPayload(BaseModel):

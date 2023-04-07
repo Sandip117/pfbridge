@@ -71,7 +71,7 @@ class Map:
         """
         toClinicalService:relayModel.clientResponseSchema   = relayModel.clientResponseSchema()
         fromPflink:dict             = payload.json()
-        toClinicalService.Status    = self.d_description.get(fromPflink.get('WorkflowState',
+        toClinicalService.State    = self.d_description.get(fromPflink.get('WorkflowState',
                                                                             'UNKNOWN'),
                                                                  "Unknown state encountered")
         if not 'Status' in fromPflink.keys():
@@ -79,7 +79,9 @@ class Map:
             toClinicalService.ModelViolation  = fromPflink
             return toClinicalService
         if not fromPflink['Status']:
-            toClinicalService.Status    = "Workflow failed. Please check any error messages."
+            toClinicalService.State     = "Workflow failed. Please check any error messages."
+        toClinicalService.Status        = fromPflink['Status']
+        toClinicalService.State         = fromPflink['WorkflowState']
         toClinicalService.Progress      = fromPflink['StateProgress']
         toClinicalService.ErrorWorkflow = fromPflink['Error']
         return toClinicalService

@@ -113,7 +113,8 @@ class clientResponseSchema(BaseModel):
     The response ultimately received by the client. This is a modified
     subset of the pflinkResponseSchema
     """
-    Status:str                      = ''
+    Status:bool                     = False
+    State:str                       = ''
     Progress:str                    = ''
     ErrorWorkflow:str               = ''
     ModelViolation:Any              = None

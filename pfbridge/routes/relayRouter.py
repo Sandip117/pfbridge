@@ -101,15 +101,79 @@ def urls_retFromModel() -> relayModel.pflinkURLs:
     `pflink` will communicate. These URLs are typically defined
     in the environment at `pfbridge`, but can also be set with
     an appropriate PUT. Note that runtime changes to these URLs
-    are _NOT_ stateful!
+    are _NOT_ preserved on restart!
 
-    Returns:
-        relayModel.pflinkURLs: The model URLs
+    Returns
+    -------
+    * `relayModel.pflinkURLs`: The model URLs
     """
     current:relayModel.pflinkURLs   = relayModel.pflinkURLs()
     current.productionURL           = settings.pflink.prodURL
     current.testingURL              = settings.pflink.testURL
     return current
+
+@router.put(
+    '/analysis/',
+    response_model  = settings.DylldAnalysis,
+    summary         = '''
+    PUT internal Analysis settings.
+    '''
+)
+def analysis_update(
+    key     = '',
+    value   = ''
+) -> settings.DylldAnalysis:
+    """
+    Description
+    -----------
+
+    Simply update `analysis` settings class values -- key/value updates
+    are specified in query parameters. Note that any changes to the base
+    settings values are only valid in this running instance of `pfbridge`!
+    Replicas will not be updated, nor will any changes persist post
+    restart!
+
+    Valid keys are:
+
+    * `analysisPluginName` -- the name of the plugin to run
+    * `analysisPluginArgs` -- args to pass to the plugin
+    * `clinicalUser` -- the name of the clinical user; this is the name within ChRIS.
+    * `analysisFeedName`  -- the template feed name
+
+    Returns
+    -------
+    * `settings.Analysis`: The current Analysis settings
+    """
+    match key:
+        case 'analysisPluginName':
+            settings.analysis.pluginName    = value
+        case 'analysisPluginArgs':
+            settings.analysis.pluginArgs    = value
+        case 'clinicalUser':
+            settings.analysis.clinicalUser  = value
+        case 'analysisFeedName':
+            settings.analysis.feedName      = value
+    return settings.analysis
+
+@router.get(
+    '/analysis/',
+    response_model  = settings.DylldAnalysis,
+    summary         = '''
+    GET the internal Analysis settings.
+    '''
+)
+def analysis_values() -> settings.DylldAnalysis:
+    """
+    Description
+    -----------
+
+    Simply return the `analysis` settings class values.
+
+    Returns
+    -------
+    * `settings.Analysis`: The current Analysis settings
+    """
+    return settings.analysis
 
 @router.post(
     '/analyze/',
@@ -170,7 +234,7 @@ async def workflow_do(
         AcquisitionProtocolName             : str   = ""
     ```
 
-    A response on the status of the workflow is immediately returned
+    A response on the status of the workflow is immediately returned.
 
     """
     # pudb.set_trace()

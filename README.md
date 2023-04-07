@@ -6,9 +6,91 @@
 
 ## Abstract
 
-`pfbridge` was developed to "bridge" communication between one service to another. One one side, an origin point is a program or service that has some basic metadata that defines a "function" to apply to some "data". The "data" in this case is typically some medical image data defined by a set of DICOM tags, and the "function" to apply is the name of a set of operations that are ultimately managed by CUBE. Controlling CUBE and shepherding its progress is a controller service called `pflink`. The `pflink` API requires more verbose data that is not really relevant to the original service -- for example a typical `pflink` payload contains information about several other services that are of no concern or interest to the originator.
+`pfbridge` was developed to "bridge" communication between one service to another. On one side, an origin point is a program or service that has some basic metadata that defines a _function_ to apply to some _data_. The "data" in this case is typically some medical image defined by a set of DICOM tags, and the "function" to apply is the name of a set of operations that are ultimately managed by CUBE. Controlling CUBE and shepherding its progress is a controller service called `pflink`. The `pflink` API requires more verbose data that is not really relevant to the original service -- for example a typical `pflink` payload contains information about several other services that are of no concern or interest to the originator.
 
 Thus, `pfbridge` was conceived as a intermediary to buffer the originator from implementation details of concern. It accepts a much reduced `http` `POST` body, and repackages this body into the more detailed `pflink` body. Then, `pfbridge` transmits (or relays) this to `pflink` and captures the `pflink` response. Before returning this response to the original caller, `pfbridge` simplifies the response to return only success and status (and possible error) information.
+
+## JSON input to `pfbridge`
+
+A client calls the appropriate `pfbridge` API endpont (`/api/v1/analyze/`) with a `POST` modeled by
+
+```json
+{
+  "imageMeta": {
+    "AccessionNumber": "",
+    "PatientID": "",
+    "PatientName": "",
+    "PatientBirthDate": "",
+    "PatientAge": "",
+    "PatientSex": "",
+    "StudyDate": "",
+    "StudyDescription": "",
+    "StudyInstanceUID": "",
+    "Modality": "",
+    "ModalitiesInStudy": "",
+    "PerformedStationAETitle": "",
+    "NumberOfSeriesRelatedInstances": "",
+    "InstanceNumber": "",
+    "SeriesDate": "",
+    "SeriesDescription": "",
+    "SeriesInstanceUID": "",
+    "ProtocolName": "",
+    "AcquisitionProtocolDescription": "",
+    "AcquisitionProtocolName": ""
+  },
+  "analyzeFunction": ""
+}
+```
+
+The `imageMeta` contains fields corresponding to DICOM tag keys that are used to query a PACS for an image (or image set) to analyze with the named `analyzeFunction`. Only `imageMeta` fields that relevant to a particular image need be explicitly specified, so for example:
+
+```json
+{
+  "imageMeta": {
+    "StudyInstanceUID": "123456789",
+    "SeriesInstanceUID": "123456789",
+  },
+  "analyzeFunction": "dylld"
+}
+```
+
+Will apply the `dylld` `analyzeFunction` to the image with the specified `StudyInstanceUID` and `SeriesInstanceUID`.
+
+## JSON return from `pfbridge`
+
+After `pfbridge` relays this JSON to `pflink`, it returns to the caller:
+
+```json
+{
+  "Status": true|false,
+  "State": "",
+  "Progress": "%",
+  "ErrorWorkflow": "",
+  "ModelViolation": null,
+  "ErrorComms": {
+    "error": "",
+    "URL": "",
+    "help": ""
+  }
+}
+```
+
+The `Status` reflects a simply `boolean` on the status of the workflow. If it has failed, i.e. is `false`, then the client should examine the `ErrorWorkflow` and `ErrorComms`. If the workflow is operational, then the client can read the current state of analysis in `State` with a `Progress` showing the progress within that state as a percentage, for example
+
+```json
+{
+  "Status": true,
+  "State": "Registering image to ChRIS",
+  "Progress": "50%",
+  "ErrorWorkflow": "",
+  "ModelViolation": null,
+  "ErrorComms": {
+    "error": "",
+    "URL": "",
+    "help": ""
+  }
+}
+```
 
 ## Getting and using
 
@@ -37,6 +119,22 @@ docker build --no-cache --build-arg UID=$UID -t local/pfbridge .
 
 ## Deploy as background process
 
+Several `pfbridge` runtime variables can be set at start time, as defined by these models:
+
+```python
+class Pflink(BaseSettings):
+    prodURL:str             = 'http://localhost:8050/workflow/'
+    testURL:str             = 'http://localhost:8050/testing/'
+
+class DylldAnalysis(Pflink):
+    pluginName:str          = 'pl-dylld'
+    pluginArgs:str          = ''
+    clinicalUser:str        = 'radstar'
+    feedName:str            = 'dylld-%SeriesInstanceUID'
+```
+
+These can be set at start time by passing them in the environment to `docker`. Note the settings class reads environment variables in a case insensitive manner.
+
 ```bash
 # Set the workflow and testing URLs of the pflink instance
 # to which we are bridging
@@ -45,9 +143,8 @@ export TESTURL=http://localhost:8050/testing
 
 # For daemon, or background mode:
 docker run --env PRODURL=$PRODURL --env TESTURL=$TESTURL                        \
-               --name pfbridge  --rm -it                                        \
+               --name pfbridge  --rm -it  -d                                    \
                -p 33333:33333                                                   \
-               -v $PWD/pfbridge:/app:ro                                         \
                local/pfbridge /start-reload.sh
 ```
 

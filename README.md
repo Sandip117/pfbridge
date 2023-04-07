@@ -2,14 +2,13 @@
 
 [![Build](https://github.com/FNNDSC/pfbridge/actions/workflows/build.yml/badge.svg)](https://github.com/FNNDSC/pfbridge/actions/workflows/build.yml)
 
-*a rather simple relay bridge between a typical clinical program and a workflow coordinator*
+*a rather simple relay bridge between two communicating entities -- intended as a translator within the ChRIS ecosystem between a clinical service and a CUBE controlling service*
 
 ## Abstract
 
-`pfbridge` was developed to "bridge" communication between one service to another. More specifically, the core origin point is a program or service that has some basic metadata that defines a "function" to apply to some "data". More concretely, the "data" in this case is typically some medical image data defined by a set of DICOM tags, and the "function" to apply is the name of a set of operations that are ultimately managed by CUBE. Controlling CUBE and shepherding its progress is a controller service called `pflink`. The `pflink` API requires more verbose data that is not really relevant to the original service -- for example a typical `pflink` payload contains information about several other services that are of no concern or interest to the originator.
+`pfbridge` was developed to "bridge" communication between one service to another. One one side, an origin point is a program or service that has some basic metadata that defines a "function" to apply to some "data". The "data" in this case is typically some medical image data defined by a set of DICOM tags, and the "function" to apply is the name of a set of operations that are ultimately managed by CUBE. Controlling CUBE and shepherding its progress is a controller service called `pflink`. The `pflink` API requires more verbose data that is not really relevant to the original service -- for example a typical `pflink` payload contains information about several other services that are of no concern or interest to the originator.
 
-Thus, `pfbridge` was conceived as a intermediary to buffer the originator from implementation details of concern. It accepts a much reduced http POST body, and then repackages this body into the more detailed `pflink` body. Then, `pfbridge` transmits (or relays) this to `pflink` and simply returns the response it received to the caller.
-
+Thus, `pfbridge` was conceived as a intermediary to buffer the originator from implementation details of concern. It accepts a much reduced `http` `POST` body, and repackages this body into the more detailed `pflink` body. Then, `pfbridge` transmits (or relays) this to `pflink` and captures the `pflink` response. Before returning this response to the original caller, `pfbridge` simplifies the response to return only success and status (and possible error) information.
 
 ## Getting and using
 
@@ -91,16 +90,31 @@ docker run --name pfbridge  --rm -it                                            
         local/pfbridge /start-reload.sh
 ```
 
-## Tests
+## Using the helper `workflow.sh` script commands
 
-Proper tests coming soon. For now you can use the `workflow.sh` script to do some rudimentary testing. Assuming you have fired up an instance of `pfbridge`:
+The `workflow.sh` script can be sourced in `bash`/`zsh` to provide full CLI helper functions for complete access to the API.
 
 ```bash
 cd pfbridge/pfbridge
 # Assuming bash/zsh:
 source workflow.sh
+```
+The following commands are defined:
 
-# You can check what the `pflink` URLs are configured as:
+* `pflinkURLs_get`: Get the `pflink` links.
+* `testURL_set <URL>`: Set the `pflink` test URL.
+* `prodURL_set <URL>`: Set the `pflink` production URL.
+* `analysis_get`: Get the `analysis` relevant data.
+* `analysis_set <key> <value>`: Set `analysis` relevant data.
+* `relay <type> <StudyInstanceUID> <SeriesInstanceUID>`: Relay an analysis to perform.
+
+## Tests
+
+Proper tests coming soon. For now you can use the `workflow.sh` script to do some rudimentary testing. Successive calls to `relay test <study> <series>` will return to the caller all the major states through which `pflink` transits. Assuming you have fired up an instance of `pfbridge`:
+
+```bash
+
+# You can check how the `pflink` URLs are currently configured with:
 ❯ pflinkURLs_get
 {
   "productionURL": "http://localhost:8050/workflow/",
@@ -112,7 +126,7 @@ source workflow.sh
 # Here we use two numeric arguments that correspond to the
 # StudyInstanceUID and SeriesInstanceUID of a dummy test:
 
-❯ relayTest 1234567 1234567
+❯ relay test 1234567 1234567
 {
   "Status": "Comms failure",
   "Progress": "n/a",
@@ -125,9 +139,9 @@ source workflow.sh
 }
 
 # If we in fact get `pflink` properly up, we can test the testing URL:
-❯ relayTest 1234567 1234567
+❯ relay test 1234567 1234567
 {
-  "Status": "Image not found!",
+  "Status": "Initializing workflow",
   "Progress": "0%",
   "ErrorWorkflow": "",
   "ErrorComms": {
@@ -137,7 +151,7 @@ source workflow.sh
   }
 }
 
-❯ relayTest 1234567 1234567
+❯ relay test 1234567 1234567
 {
   "Status": "Pulling image for analysis",
   "Progress": "25%",
@@ -149,7 +163,7 @@ source workflow.sh
   }
 }
 
-❯ relayTest 1234567 1234567
+❯ relay test 1234567 1234567
 {
   "Status": "Pulling image for analysis",
   "Progress": "50%",

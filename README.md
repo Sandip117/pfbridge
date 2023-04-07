@@ -75,7 +75,7 @@ After `pfbridge` relays this JSON to `pflink`, it returns to the caller:
 }
 ```
 
-The `Status` reflects a simply `boolean` on the status of the workflow. If it has failed, i.e. is `false`, then the client should examine the `ErrorWorkflow` and `ErrorComms`. If the workflow is operational, then the client can read the current state of analysis in `State` with a `Progress` showing the progress within that state as a percentage, for example
+The `Status` is a `boolean` on the status of the workflow. If it has failed, i.e. `false`, then the client should examine the `ErrorWorkflow` and `ErrorComms`. If is operational, i.e. `true`, then the client can read the current state of analysis in `State` with a `Progress` showing the progress within that state as a percentage, for example
 
 ```json
 {

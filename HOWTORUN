@@ -8,8 +8,8 @@ docker build --build-arg UID=$UID -t local/pfbridge .
 
 # Set the workflow and testing URLs of the pflink instance
 # to which we are bridging
-export PRODURL=http://localhost:8050/workflow
-export TESTURL=http://localhost:8050/testing
+export PRODURL=http://localhost:8050/workflow/
+export TESTURL=http://localhost:8050/testing/
 
 # For daemon, or background mode:
 docker run --env PRODURL=$PRODURL --env TESTURL=$TESTURL                        \

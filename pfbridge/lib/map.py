@@ -81,7 +81,6 @@ class Map:
         if not fromPflink['Status']:
             toClinicalService.State     = "Workflow failed. Please check any error messages."
         toClinicalService.Status        = fromPflink['Status']
-        toClinicalService.State         = fromPflink['WorkflowState']
         toClinicalService.Progress      = fromPflink['StateProgress']
         toClinicalService.ErrorWorkflow = fromPflink['Error']
         return toClinicalService

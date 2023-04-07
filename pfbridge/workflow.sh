@@ -78,41 +78,63 @@ pflinkURLs_get() {
   \"$pfbridge/api/v1/pflink/\"                \
   -H \"accept: application/json\"             \
   )
+  if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
 }
 
 testURL_set() {
   URL=$1
   CMD=$(echo curl -s -X 'PUT'                 \
-  \"$pfbridge/api/v1/pflink/testURL/?URL=$1\" \
+  \"$pfbridge/api/v1/pflink/testURL/?URL=$URL\" \
   -H \"accept: application/json\"             \
   )
+  if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
 }
 
 prodURL_set() {
   URL=$1
   CMD=$(echo curl -s -X 'PUT'                 \
-  \"$pfbridge/api/v1/pflink/prodURL/?URL=$1\" \
+  \"$pfbridge/api/v1/pflink/prodURL/?URL=$URL\" \
   -H \"accept: application/json\"             \
   )
+  if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
 }
 
+analysis_get() {
+  CMD=$(echo curl -s -X 'GET'                 \
+  \"$pfbridge/api/v1/analysis/\"                 \
+  -H \"accept: application/json\"             \
+  )
+  if (( ${#VERBOSE} )) ; then echo $CMD ; fi
+  echo "$CMD" | sh | jq
+}
+
+analysis_set() {
+  KEY=$1
+  VAL=$2
+  CMD=$(echo curl -s -X 'PUT'                 \
+  \"$pfbridge/api/v1/analysis/?key=$KEY\&value=$VAL\" \
+  -H \"accept: application/json\"             \
+  )
+  if (( ${#VERBOSE} )) ; then echo $CMD ; fi
+  echo "$CMD" | sh | jq
+}
 
 ###############################################################################
 #_____________________________________________________________________________#
-# R E L A Y  t e s t                                                          #
+# R E L A Y                                                                   #
 #_____________________________________________________________________________#
 ###############################################################################
-# Relay and echo back to the test API endpoint of pflink                      #
+# Relay payloads to the workflow API endpoint of pflink                       #
 ###############################################################################
 #
 
-relayTest () {
-  StudyInstanceUID=$1
-  SeriesInstanceUID=$2
-  VERBOSE=$3
+relay () {
+  Type=$1 # 'test' or anything else
+  StudyInstanceUID=$2
+  SeriesInstanceUID=$3
   PACSDIRECTIVE='{
         "AccessionNumber": "",
         "PatientID": "",
@@ -135,8 +157,10 @@ relayTest () {
         "AcquisitionProtocolDescription": "",
         "AcquisitionProtocolName": ""
   }'
+  QUERY=''
+  if [[ $Type == 'test' ]] ; then QUERY='?test=true' ; fi
   CMD=$(echo curl -s -X 'POST'            \
-  \"$pfbridge/api/v1/analyze/?test=true\" \
+  \"$pfbridge/api/v1/analyze/$QUERY\" \
   -H \"accept: application/json\"         \
   -H \"Content-Type: application/json\"   \
   -d ''\''{
@@ -146,7 +170,6 @@ relayTest () {
   if (( ${#VERBOSE} )) ; then echo "$CMD" ; fi
   echo "$CMD" | sh | jq
 }
-
 
 #
 # And we're done!

@@ -24,12 +24,13 @@ class Map:
         self.mapContext:str     = "radstar"
         self.d_description: dict[str, str]      = \
         {
-            "STARTED":          "Starting workflow",
+            "UNKNOWN":          "An unknown state was encounted",
+            "INITIALIZING":     "Initializing workflow",
             "RETRIEVING":       "Pulling image for analysis",
             "PUSHING":          "Pushing image into ChRIS",
             "REGISTERING":      "Registering image to ChRIS",
             "FEED_CREATED":     "Analysis created in ChRIS",
-            "ANALYSIS_STARTED": "Analysis running in ChRIS",
+            "ANALYZING":        "Analysis running in ChRIS",
             "COMPLETED":        "Results available in PACS"
         }
         for k, v in kwargs.items():
@@ -52,8 +53,8 @@ class Map:
         pflinkPOST.FeedName                 = payload.analyzeFunction
         match payload.analyzeFunction:
             case 'dylld':
-                pflinkPOST.analysisArgs.PluginName   = settings.dylld.analysisPluginName
-                pflinkPOST.analysisArgs.Version      = settings.dylld.analysisPluginArgs
+                pflinkPOST.analysisArgs.PluginName   = settings.analysis.pluginName
+                pflinkPOST.analysisArgs.Version      = settings.analysis.pluginArgs
         return pflinkPOST
 
     def fromPflink_transform(self, payload:httpx.Response) -> relayModel.clientResponseSchema:
@@ -70,10 +71,15 @@ class Map:
         """
         toClinicalService:relayModel.clientResponseSchema   = relayModel.clientResponseSchema()
         fromPflink:dict             = payload.json()
-        toClinicalService.Status    = self.d_description.get(fromPflink['WorkflowState'],
+        toClinicalService.Status    = self.d_description.get(fromPflink.get('WorkflowState',
+                                                                            'UNKNOWN'),
                                                                  "Unknown state encountered")
-        if not fromPflink['StudyFound']:
-            toClinicalService.Status    = "Image not found!"
+        if not 'Status' in fromPflink.keys():
+            # Here the response from the client violates its own response model!
+            toClinicalService.ModelViolation  = fromPflink
+            return toClinicalService
+        if not fromPflink['Status']:
+            toClinicalService.Status    = "Workflow failed. Please check any error messages."
         toClinicalService.Progress      = fromPflink['StateProgress']
         toClinicalService.ErrorWorkflow = fromPflink['Error']
         return toClinicalService

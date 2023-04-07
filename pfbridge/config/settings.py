@@ -1,14 +1,15 @@
-import os
+import  os
+from    pydantic    import BaseSettings
 
-class Pflink:
-    prodURL:str             = os.getenv('PRODURL', 'http://localhost:8050/workflow')
-    testURL:str             = os.getenv('TESTURL', 'http://localhost:8050/testing/')
+class Pflink(BaseSettings):
+    prodURL:str             = 'http://localhost:8050/workflow/'
+    testURL:str             = 'http://localhost:8050/testing/'
 
-class Dylld(Pflink):
-    analysisPluginName:str  = 'pl-dylld'
-    analysisPluginArgs:str  = ''
+class DylldAnalysis(Pflink):
+    pluginName:str          = 'pl-dylld'
+    pluginArgs:str          = ''
     clinicalUser:str        = 'radstar'
-    analysisFeedName:str    = 'dylld-%SeriesInstanceUID'
+    feedName:str            = 'dylld-%SeriesInstanceUID'
 
-pflink  = Pflink()
-dylld   = Dylld()
+pflink          = Pflink()
+analysis        = DylldAnalysis()

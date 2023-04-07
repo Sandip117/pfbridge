@@ -5,7 +5,7 @@ str_description = """
 """
 
 from    pydantic            import BaseModel, Field
-from    typing              import Optional, List, Dict
+from    typing              import Optional, List, Dict, Any
 from    datetime            import datetime
 from    enum                import Enum
 from    pathlib             import Path
@@ -75,8 +75,8 @@ class pflinkInput(BaseModel):
     PACSdirective:PACSqueryCore     = PACSqueryCore()
     thenArgs:pypxModel              = pypxModel()
     dblogbasepath:str               = db().path
-    FeedName:str                    = settings.dylld.analysisFeedName
-    User:str                        = settings.dylld.clinicalUser
+    FeedName:str                    = settings.analysis.feedName
+    User:str                        = settings.analysis.clinicalUser
     analysisArgs:analysisModel      = analysisModel()
 
 class clientPayload(BaseModel):
@@ -99,7 +99,7 @@ class pflinkResponseSchema(BaseModel):
     """
     The Workflow status response model. This is the return from pflink.
     """
-    StudyFound:bool                 = False
+    Status:bool                     = False
     WorkflowState:str               = ''
     StateProgress:str               = "0%"
     FeedId:str                      = ""
@@ -116,4 +116,5 @@ class clientResponseSchema(BaseModel):
     Status:str                      = ''
     Progress:str                    = ''
     ErrorWorkflow:str               = ''
+    ModelViolation:Any              = None
     ErrorComms:pflinkError          = pflinkError()

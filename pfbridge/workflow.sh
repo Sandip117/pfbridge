@@ -21,7 +21,49 @@
 #
 # In some envs, this MUST be an IP address!
 export pfbridge=http://localhost:33333
-export pflink=http://localhost:8050
+
+###############################################################################
+#_____________________________________________________________________________#
+# H E L P                                                                     #
+#_____________________________________________________________________________#
+# Use pflink_help to get some in-line alias help.                             #
+###############################################################################
+pfbridge_help() {
+  cat << EOM
+  The following aliases are available:
+
+  pflinkURLs_get            - get the 'pflink' URLs with which 'pfbridge'
+                              communicates
+  testURL_set <URL>         - set the "test" URL of 'pflink'
+  prodURL_set <URL>         - set the "production" URL of 'pflink'
+  analysis_get              - get the details of an analysis (plugin name, username, etc)
+  analysis_set <key> <val>  - set the analysis <key> to <val>
+  relay <type> <STD> <SRD>  - relay the <STD> (StudyInstanceUID) and <SRD>
+                              (SeriesInstanceUID) to 'pflink'. If <type> is
+                              "test" then use the testing API, otherwise for
+                              any other value of <type> use the production API.
+
+  NB:
+  * Set the 'pfbridge' environment variable if needed to the 'pfbridge' to
+    access:
+
+    export pfbridge=http://localhost:33333
+
+  * Also, note that on startup, the 'pflink' production and test
+    URLs can be specified in environment variables, e.g:
+
+    export PRODURL=http://localhost:8050/workflow/
+    export TESTURL=http://localhost:8050/testing/
+
+    These are 'pflink' URLS!
+
+  * Set an environment variable called VERBOSE (to any value) to
+    trigger printing the actual curl command being used. Unset this
+    variable to turn off verbose logging.
+
+EOM
+}
+
 
 ###############################################################################
 #_____________________________________________________________________________#
@@ -74,9 +116,9 @@ randtime_generate () {
 #
 
 pflinkURLs_get() {
-  CMD=$(echo curl -s -X 'GET'                 \
-  \"$pfbridge/api/v1/pflink/\"                \
-  -H \"accept: application/json\"             \
+  CMD=$(echo curl -s -X 'GET'                         \
+  \"$pfbridge/api/v1/pflink/\"                        \
+  -H \"accept: application/json\"                     \
   )
   if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
@@ -84,9 +126,9 @@ pflinkURLs_get() {
 
 testURL_set() {
   URL=$1
-  CMD=$(echo curl -s -X 'PUT'                 \
-  \"$pfbridge/api/v1/pflink/testURL/?URL=$URL\" \
-  -H \"accept: application/json\"             \
+  CMD=$(echo curl -s -X 'PUT'                         \
+  "$pfbridge/api/v1/pflink/testURL/?URL=$URL"         \
+  -H "accept: application/json"                       \
   )
   if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
@@ -94,18 +136,18 @@ testURL_set() {
 
 prodURL_set() {
   URL=$1
-  CMD=$(echo curl -s -X 'PUT'                 \
-  \"$pfbridge/api/v1/pflink/prodURL/?URL=$URL\" \
-  -H \"accept: application/json\"             \
+  CMD=$(echo curl -s -X 'PUT'                         \
+  "$pfbridge/api/v1/pflink/prodURL/?URL=$URL"         \
+  -H "accept: application/json"                       \
   )
   if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
 }
 
 analysis_get() {
-  CMD=$(echo curl -s -X 'GET'                 \
-  \"$pfbridge/api/v1/analysis/\"                 \
-  -H \"accept: application/json\"             \
+  CMD=$(echo curl -s -X 'GET'                         \
+  \"$pfbridge/api/v1/analysis/\"                      \
+  -H \"accept: application/json\"                     \
   )
   if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq
@@ -114,9 +156,9 @@ analysis_get() {
 analysis_set() {
   KEY=$1
   VAL=$2
-  CMD=$(echo curl -s -X 'PUT'                 \
-  \"$pfbridge/api/v1/analysis/?key=$KEY\&value=$VAL\" \
-  -H \"accept: application/json\"             \
+  CMD=$(echo curl -s -X 'PUT'                         \
+  "$pfbridge/api/v1/analysis/?key=$KEY\&value=$VAL"   \
+  -H "accept: application/json"                       \
   )
   if (( ${#VERBOSE} )) ; then echo $CMD ; fi
   echo "$CMD" | sh | jq

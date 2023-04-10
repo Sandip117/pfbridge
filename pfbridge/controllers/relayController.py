@@ -95,13 +95,14 @@ def commsFailed_handle(URL:str, e:Exception) -> relayModel.clientResponseSchema:
                                          conditions
     """
     failedClient:relayModel.clientResponseSchema    = relayModel.clientResponseSchema()
-    failedClient.Status         = "Comms failure"
+    failedClient.Status         = False
+    failedClient.State          = "Comms failure"
     failedClient.Progress       = "n/a"
     failedClient.ErrorWorkflow  = "n/a"
     errorResponse:relayModel.pflinkError            = relayModel.pflinkError()
     errorResponse.URL           = URL
     errorResponse.error         = str(e)
-    errorResponse.help          = "Please check that the pflink URL is correct"
+    errorResponse.help          = "Please check that the pflink URL is correct (note 'localhost' can be problematic in some proxy settings)"
     failedClient.ErrorComms     = errorResponse
     return failedClient
 

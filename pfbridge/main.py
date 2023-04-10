@@ -12,11 +12,8 @@ from    base.router             import helloRouter_create
 from    routes.relayRouter      import router   as relay_router
 
 from    os                      import path
-# from    pfstate                 import  S
 
 import  pudb
-from    pypx                    import  smdb
-# from    argparse                import  Namespace
 
 with open(path.join(path.dirname(path.abspath(__file__)), 'ABOUT')) as f:
     str_about:str       = f.read()

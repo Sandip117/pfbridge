@@ -3,9 +3,6 @@ pfstate~=3.0.2
 pudb
 webob
 pynetdicom
-pypx>=3.10.12
-numpy
-scipy
 
 # Database
 motor

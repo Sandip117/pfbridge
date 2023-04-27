@@ -24,14 +24,14 @@ class Map:
         self.mapContext:str     = "radstar"
         self.d_description: dict[str, str]      = \
         {
-            "UNKNOWN":          "An unknown state was encounted",
-            "INITIALIZING":     "Initializing workflow",
-            "RETRIEVING":       "Pulling image for analysis",
-            "PUSHING":          "Pushing image into ChRIS",
-            "REGISTERING":      "Registering image to ChRIS",
-            "FEED_CREATED":     "Analysis created in ChRIS",
-            "ANALYZING":        "Analysis running in ChRIS",
-            "COMPLETED":        "Results available in PACS"
+            "UNKNOWN":                   "An unknown state was encounted",
+            "initializing workflow":     "Initializing workflow",
+            "retrieving from PACS":      "Pulling image for analysis",
+            "pushing to swift":          "Pushing image into ChRIS",
+            "registering to CUBE":       "Registering image to ChRIS",
+            "feed created":              "Analysis created in ChRIS",
+            "analyzing study":           "Analysis running in ChRIS",
+            "completed":                 "Results available in PACS"
         }
         for k, v in kwargs.items():
             if k == 'name'      : self.mapName  = v
@@ -48,13 +48,13 @@ class Map:
         Returns:
             relayModel.pflinkInput: a payload suitable for relaying on to `pflink`.
         """
-        pflinkPOST:relayModel.pflinkInput   = relayModel.pflinkInput()
-        pflinkPOST.PACSdirective            = payload.imageMeta
-        pflinkPOST.FeedName                 = payload.analyzeFunction
+        pflinkPOST:relayModel.pflinkInput    = relayModel.pflinkInput()
+        pflinkPOST.PACS_directive            = payload.imageMeta
+        pflinkPOST.workflow_info.feed_name   = payload.analyzeFunction
         match payload.analyzeFunction:
             case 'dylld':
-                pflinkPOST.analysisArgs.PluginName   = settings.analysis.pluginName
-                pflinkPOST.analysisArgs.Version      = settings.analysis.pluginArgs
+                pflinkPOST.workflow_info.plugin_name   = settings.analysis.pluginName
+                pflinkPOST.workflow_info.plugin_params = settings.analysis.pluginArgs
         return pflinkPOST
 
     def fromPflink_transform(self, payload:httpx.Response) -> relayModel.clientResponseSchema:
@@ -71,16 +71,16 @@ class Map:
         """
         toClinicalService:relayModel.clientResponseSchema   = relayModel.clientResponseSchema()
         fromPflink:dict             = payload.json()
-        toClinicalService.State    = self.d_description.get(fromPflink.get('WorkflowState',
+        toClinicalService.State    = self.d_description.get(fromPflink.get('workflow_state',
                                                                             'UNKNOWN'),
                                                                  "Unknown state encountered")
-        if not 'Status' in fromPflink.keys():
+        if not 'status' in fromPflink.keys():
             # Here the response from the client violates its own response model!
             toClinicalService.ModelViolation  = fromPflink
             return toClinicalService
-        if not fromPflink['Status']:
+        if not fromPflink['status']:
             toClinicalService.State     = "Workflow failed. Please check any error messages."
-        toClinicalService.Status        = fromPflink['Status']
-        toClinicalService.Progress      = fromPflink['StateProgress']
-        toClinicalService.ErrorWorkflow = fromPflink['Error']
+        toClinicalService.Status        = fromPflink['status']
+        toClinicalService.Progress      = fromPflink['state_progress']
+        toClinicalService.ErrorWorkflow = fromPflink['error']
         return toClinicalService

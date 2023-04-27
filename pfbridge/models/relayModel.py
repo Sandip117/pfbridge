@@ -32,6 +32,14 @@ class DICOMfile(BaseModel):
     """Explicit extention of DICOMS -- relevant to ChRIS"""
     extension:str                   = 'dcm'
 
+class pfdcmInfo(BaseModel):
+    pfdcm_service:str               = pfdcmService().provider
+    PACS_service:str                = pacsService().provider
+    cube_service:str                = CUBEandSwiftKey().key
+    swift_service:str               = CUBEandSwiftKey().key
+    dicom_file_extension:str        = DICOMfile().extension
+    db_log_path:str                 = db().path
+
 class PACSqueryCore(BaseModel):
     """The PACS Query model"""
     AccessionNumber                     : str   = ""
@@ -55,29 +63,18 @@ class PACSqueryCore(BaseModel):
     AcquisitionProtocolDescription      : str   = ""
     AcquisitionProtocolName             : str   = ""
 
-class pypxModel(BaseModel):
-    db:str                          = db().path
-    swift:str                       = CUBEandSwiftKey().key
-    CUBE:str                        = CUBEandSwiftKey().key
-    swiftServicesPACS:str           = pacsService().provider
-    swiftPackEachDICOM:bool         = True
-    parseAllFilesWithSubstr:str     = DICOMfile().extension
-
 class analysisModel(BaseModel):
-    PluginName:str                  = ''
-    Version:str                     = ''
-    Params:str                      = ''
-    PassUserCreds:bool              = False
+    feed_name:str                  = settings.analysis.feedName
+    user_name:str                  = settings.analysis.clinicalUser
+    plugin_name:str                = ""
+    plugin_version:str             = ""
+    plugin_params:str              = ""
+    pipeline_name:str              = ""
 
 class pflinkInput(BaseModel):
-    PFDCMservice:str                = pfdcmService().provider
-    PACSservice:str                 = pacsService().provider
-    PACSdirective:PACSqueryCore     = PACSqueryCore()
-    thenArgs:pypxModel              = pypxModel()
-    dblogbasepath:str               = db().path
-    FeedName:str                    = settings.analysis.feedName
-    User:str                        = settings.analysis.clinicalUser
-    analysisArgs:analysisModel      = analysisModel()
+    pfdcm_info:pfdcmInfo            = pfdcmInfo()
+    PACS_directive:PACSqueryCore    = PACSqueryCore()
+    workflow_info:analysisModel     = analysisModel()
 
 class clientPayload(BaseModel):
     imageMeta:PACSqueryCore         = PACSqueryCore()
@@ -99,14 +96,12 @@ class pflinkResponseSchema(BaseModel):
     """
     The Workflow status response model. This is the return from pflink.
     """
-    Status:bool                     = False
-    WorkflowState:str               = ''
-    StateProgress:str               = "0%"
-    FeedId:str                      = ""
-    FeedName:str                    = ""
-    CurrentNode:list                = []
-    Message:str                     = ""
-    Error:str                       = ""
+    status: bool                    = False
+    workflow_state: str             = ""
+    state_progress: str             = "0%"
+    feed_id: str                    = ""
+    feed_name: str                  = ""
+    error: str                      = ""
 
 class clientResponseSchema(BaseModel):
     """

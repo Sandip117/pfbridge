@@ -155,6 +155,67 @@ def analysis_update(
             settings.analysis.feedName      = value
     return settings.analysis
 
+@router.put(
+    '/pfdcm/',
+    response_model  = settings.Pfdcm,
+    summary         = '''
+    PUT internal Pfdcm settings.
+    '''
+)
+def pfdcm_update(
+    key     = '',
+    value   = ''
+) -> settings.Pfdcm:
+    """
+    Description
+    -----------
+
+    Simply update `analysis` settings class values -- key/value updates
+    are specified in query parameters. Note that any changes to the base
+    settings values are only valid in this running instance of `pfbridge`!
+    Replicas will not be updated, nor will any changes persist post
+    restart!
+
+    Valid keys are:
+
+    * `analysisPluginName` -- the name of the plugin to run
+    * `analysisPluginArgs` -- args to pass to the plugin
+    * `clinicalUser` -- the name of the clinical user; this is the name within ChRIS.
+    * `analysisFeedName`  -- the template feed name
+
+    Returns
+    -------
+    * `settings.Pfdcm`: The current Pfdcm settings
+    """
+    match key:
+        case 'pfdcmServiceName':
+            settings.pfdcm.pfdcmServiceProvider    = value
+        case 'PACSserviceName':
+            settings.pfdcm.PACSserviceProvider     = value
+        case 'CUBEandSwiftName':
+            settings.pfdcm.CUBEandSwiftKey         = value
+    return settings.pfdcm
+
+@router.get(
+    '/pfdcm/',
+    response_model  = settings.Pfdcm,
+    summary         = '''
+    GET the internal Pfdcm settings.
+    '''
+)
+def pfdcm_values() -> settings.Pfdcm:
+    """
+    Description
+    -----------
+
+    Simply return the `analysis` settings class values.
+
+    Returns
+    -------
+    * `settings.Analysis`: The current Analysis settings
+    """
+    return settings.pfdcm
+
 @router.get(
     '/analysis/',
     response_model  = settings.DylldAnalysis,

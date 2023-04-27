@@ -11,5 +11,12 @@ class DylldAnalysis(Pflink):
     clinicalUser:str        = 'radstar'
     feedName:str            = 'dylld-%SeriesInstanceUID'
 
+class Pfdcm(BaseSettings):
+    pfdcmServiceProvider: str          = 'PFDCMLOCAL'
+    PACSserviceProvider: str           = 'orthanc'
+    CUBEandSwiftKey: str               = 'local'
+
+
 pflink          = Pflink()
 analysis        = DylldAnalysis()
+pfdcm           = Pfdcm()

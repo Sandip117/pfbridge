@@ -191,9 +191,9 @@ def pfdcm_update(
         case 'pfdcmServiceName':
             settings.pfdcm.pfdcmServiceProvider    = value
         case 'PACSserviceName':
-            settings.pfdcm.PACSserviceProvider     = value
+            settings.pfdcm.pacsServiceProvider     = value
         case 'CUBEandSwiftName':
-            settings.pfdcm.CUBEandSwiftKey         = value
+            settings.pfdcm.cubeAndSwiftKey         = value
     return settings.pfdcm
 
 @router.get(

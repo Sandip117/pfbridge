@@ -13,8 +13,8 @@ class DylldAnalysis(Pflink):
 
 class Pfdcm(BaseSettings):
     pfdcmServiceProvider: str          = 'PFDCMLOCAL'
-    PACSserviceProvider: str           = 'orthanc'
-    CUBEandSwiftKey: str               = 'local'
+    pacsServiceProvider: str           = 'orthanc'
+    cubeAndSwiftKey: str               = 'local'
 
 
 pflink          = Pflink()

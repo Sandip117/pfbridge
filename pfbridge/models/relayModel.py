@@ -34,9 +34,9 @@ class DICOMfile(BaseModel):
 
 class pfdcmInfo(BaseModel):
     pfdcm_service:str               = settings.pfdcm.pfdcmServiceProvider
-    PACS_service:str                = settings.pfdcm.PACSserviceProvider
-    cube_service:str                = settings.pfdcm.CUBEandSwiftKey
-    swift_service:str               = settings.pfdcm.CUBEandSwiftKey
+    PACS_service:str                = settings.pfdcm.pacsServiceProvider
+    cube_service:str                = settings.pfdcm.cubeAndSwiftKey
+    swift_service:str               = settings.pfdcm.cubeAndSwiftKey
     dicom_file_extension:str        = DICOMfile().extension
     db_log_path:str                 = db().path
 
